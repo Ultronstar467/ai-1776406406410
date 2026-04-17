@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Tic Tac Toe</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-bg: #1a1a2e;
+            --secondary-bg: #16213e;
+            --accent-color-x: #e94560; /* Reddish for X */
+            --accent-color-o: #0f3460; /* Darker blue for O */
+            --cell-bg-empty: #0f3460;
+            --cell-hover: #533483;
+            --text-color: #e0e0e0;
+            --header-color: #bae8e8;
+            --button-bg: #533483;
+            --button-hover-bg: #e94560;
+            --winning-cell-bg: #ffd700; /* Gold */
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--secondary-bg);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--header-color);
+            margin-bottom: 25px;
+            font-size: 2.5em;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #game-status {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--text-color);
+            min-height: 30px; /* Prevent layout shift */
+        }
+
+        .status-playing {
+            color: var(--header-color);
+        }
+
+        .status-win {
+            color: var(--winning-cell-bg);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-draw {
+            color: #ffaa00; /* Orange for draw */
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+            background-color: var(--primary-bg);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell {
+            background-color: var(--cell-bg-empty);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell:not(.x):not(.o):hover {
+            background-color: var(--cell-hover);
+            transform: scale(1.05);
+        }
+
+        .cell.x {
+            color: var(--accent-color-x);
+            background-color: var(--secondary-bg);
+        }
+
+        .cell.o {
+            color: var(--accent-color-o);
+            background-color: var(--secondary-bg);
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .cell.winning {
+            background-color: var(--winning-cell-bg) !important;
+            color: var(--primary-bg) !important;
+            animation: bounce 0.8s ease-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #restart-button {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #restart-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        #restart-button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                max-width: 95%;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            #game-status {
+                font-size: 1.2em;
+            }
+            .game-board {
+                width: 270px;
+                height: 270px;
+            }
+            .cell {
+                font-size: 3em;
+            }
+            #restart-button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div id="game-status" class="status-playing"></div>
+        <div class="game-board" id="game-board">
+            <!-- Cells will be generated by JavaScript -->
+        </div>
+        <button id="restart-button">Restart Game</button>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000'; // Make sure this matches your FastAPI server address
+
+        const gameBoard = document.getElementById('game-board');
+        const gameStatus = document.getElementById('game-status');
+        const restartButton = document.getElementById('restart-button');
+
+        let currentGameState = null;
+
+        // Function to determine winning cells (for visual highlighting)
+        function getWinningCells(board, player) {
+            const lines = [
+                // Rows
+                [[0,0], [0,1], [0,2]],
+                [[1,0], [1,1], [1,2]],
+                [[2,0], [2,1], [2,2]],
+                // Columns
+                [[0,0], [1,0], [2,0]],
+                [[0,1], [1,1], [2,1]],
+                [[0,2], [1,2], [2,2]],
+                // Diagonals
+                [[0,0], [1,1], [2,2]],
+                [[0,2], [1,1], [2,0]]
+            ];
+
+            for (const line of lines) {
+                const [a, b, c] = line;
+                if (board[a[0]][a[1]] === player &&
+                    board[b[0]][b[1]] === player &&
+                    board[c[0]][c[1]] === player) {
+                    return line;
+                }
+            }
+            return [];
+        }
+
+        async function fetchGameState() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/game`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                currentGameState = await response.json();
+                renderGame(currentGameState);
+            } catch (error) {
+                console.error("Error fetching game state:", error);
+                gameStatus.textContent = "Error: Could not connect to server.";
+                gameStatus.className = 'status-error';
+            }
+        }
+
+        function renderGame(state) {
+            // Update game status text and styling
+            gameStatus.classList.remove('status-playing', 'status-win', 'status-draw');
+            let statusText = '';
+            if (state.status === 'playing') {
+                statusText = `Player ${state.current_player}'s turn`;
+                gameStatus.classList.add('status-playing');
+            } else if (state.status === 'X_wins') {
+                statusText = 'Player X wins!';
+                gameStatus.classList.add('status-win');
+            } else if (state.status === 'O_wins') {
+                statusText = 'Player O wins!';
+                gameStatus.classList.add('status-win');
+            } else if (state.status === 'draw') {
+                statusText = "It's a draw!";
+                gameStatus.classList.add('status-draw');
+            }
+            gameStatus.textContent = statusText;
+
+            // Render board cells
+            gameBoard.innerHTML = ''; // Clear previous board
+            const winningCellsCoords = (state.status === 'X_wins' || state.status === 'O_wins') ? 
+                                       getWinningCells(state.board, state.status.charAt(0)) : [];
+
+            state.board.forEach((row, rowIndex) => {
+                row.forEach((cellValue, colIndex) => {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = rowIndex;
+                    cell.dataset.col = colIndex;
+                    cell.textContent = cellValue;
+
+                    if (cellValue === 'X') {
+                        cell.classList.add('x');
+                    } else if (cellValue === 'O') {
+                        cell.classList.add('o');
+                    }
+
+                    // Disable clicks if game is over or cell is already filled
+                    if (state.status !== 'playing' || cellValue !== '') {
+                        cell.classList.add('disabled');
+                    } else {
+                        cell.addEventListener('click', handleCellClick);
+                    }
+
+                    // Highlight winning cells
+                    if (winningCellsCoords.some(coord => coord[0] === rowIndex && coord[1] === colIndex)) {
+                        cell.classList.add('winning');
+                    }
+
+                    gameBoard.appendChild(cell);
+                });
+            });
+        }
+
+        async function handleCellClick(event) {
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/game/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ row, col }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                currentGameState = await response.json();
+                renderGame(currentGameState);
+            } catch (error) {
+                console.error("Error making move:", error);
+                // Optionally display a user-friendly error message
+                gameStatus.textContent = `Error: ${error.message}`;
+                gameStatus.classList.add('status-error');
+            }
+        }
+
+        async function handleRestartClick() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/game/reset`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                currentGameState = await response.json();
+                renderGame(currentGameState);
+            } catch (error) {
+                console.error("Error restarting game:", error);
+                gameStatus.textContent = `Error: ${error.message}`;
+                gameStatus.classList.add('status-error');
+            }
+        }
+
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', fetchGameState);
+        restartButton.addEventListener('click', handleRestartClick);
+    </script>
+</body>
+</html>
